@@ -87,6 +87,11 @@ if task in tasks:
     dinfo = pickle.load(open(dinfoFile))
     gzi = dinfo['gt']
     errRates = { 'signal' : {}, 'majority' : {}, 'bias' : {} }
+    
+    #getParameter formats the data from a dictionary of lists of single length
+    #(Most likely they're single length because it's a binary problem) to a list
+    #of predictions where list seat is the image number.
+
     getParameter = lambda prmdict, pidx: [prmdict[i][pidx] for i \
                                           in range(len(prmdict))]
     for (numWkr, trialList) in dinfo['filemap']:
@@ -94,13 +99,27 @@ if task in tasks:
         for alg in errRates.keys(): errRates[alg][numWkr] = []
         for dfile in trialList:
             # Binary Signal Model
-            m = Binary1dSignalModel(filename=dfile)
+            m = Binary1dSignalModel(filename=dfile) 
             m.optimize_param()
+
+            #TODO: Find out the possible range of predictions and format
+            #the predictions into a range 0-1.
+            print(m.get_image_param())
+            #exi is a list of predictions with image numbers as list seats.
             exi = getParameter(m.get_image_param(), 0)
+            #If exi[i] > 0, it is more likely that for that image we have
+            #a true gt. (and vice vluebersa if exi[i] < 0)
+            #
+            #comperr compares the ground truth binary values and the 
+            #outcome of exi[i] > 0, divides by total images to get the rate
+            #of error.
+
             comperr = lambda ez: float(sum([ez[id]!=gzi[id] for id \
               in range(dinfo['numImg'])]))/dinfo['numImg']
             err = comperr([exi[id]>0. for id in range(dinfo['numImg'])])
             errRates['signal'][numWkr].append(err)
+            
+
             # Binary Bias Model
             m = BinaryBiasModel(filename=dfile)
             m.optimize_param()

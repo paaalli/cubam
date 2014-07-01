@@ -66,6 +66,7 @@ if task in tasks:
     for (labelType, idx, prmName) in plots:
         n = len(prm[labelType])
         gt = [prm[labelType][id][idx] for id in range(n)]
+        print gt
         est = [eprm[labelType][id][idx] for id in range(n)]
         # plot the correlation between ground truth and estimate
         fig = figure(1); fig.clear(); ax = fig.add_subplot(1,1,1)
