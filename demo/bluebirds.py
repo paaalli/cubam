@@ -101,10 +101,7 @@ if task in tasks:
             # Binary Signal Model
             m = Binary1dSignalModel(filename=dfile) 
             m.optimize_param()
-
-            #TODO: Find out the possible range of predictions and format
-            #the predictions into a range 0-1.
-            print(m.get_image_param())
+            
             #exi is a list of predictions with image numbers as list seats.
             exi = getParameter(m.get_image_param(), 0)
             #If exi[i] > 0, it is more likely that for that image we have

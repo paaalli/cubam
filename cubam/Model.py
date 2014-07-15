@@ -132,12 +132,26 @@ class Model:
     self.set_image_param(res[0])
     return res
   
+  #Optimization of parameters where ground truth estimations have been
+  #summed out.
   def optimize_param(self, numIter=30, options=None, verbose=False):
+    self.use_gt_predictions = False
     for n in range(numIter):
       if verbose: print "  - iteration %d/%d" % (n+1, numIter)
       self.optimize_image_param()
       self.optimize_worker_param()
   
+  #Optimization of parameters where we use a prediction for ground truth
+  #estimate based on computer vision prediction.
+  #cvProb: output of SVM prediction based on image features
+  def optimize_param(self, cvProb, numIter=30, options=None, verbose=False):
+    self.use_gt_predictions = True
+    for n in range(numIter):
+      if verbose: print "  - iteration %d/%d" % (n+1, numIter)
+      self.predict_gt(
+      self.optimize_image_param()
+      self.optimize_worker_param()
+      
   def objective(self, prm=None):
     n = annmodel.get_image_param_len(self.mPtr)
     if not prm is None:
