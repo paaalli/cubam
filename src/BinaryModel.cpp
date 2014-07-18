@@ -25,6 +25,7 @@ void BinaryModel::clear_data() {
   delete [] mImgLbls; mImgLbls = 0;
   delete [] mLabels; mLabels = 0;
   mDataIsLoaded = false;
+
 }
 
 // TODO: error checking here so that we know when a file was corrupt
@@ -88,4 +89,6 @@ void BinaryModel::load_data(const char *filename) {
   mDataIsLoaded = true; // this must come before reset to avoid exceptions
   reset_worker_param();
   reset_image_param();
+  reset_gt_prediction();
+  reset_cv_prob();
 }

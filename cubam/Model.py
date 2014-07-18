@@ -77,7 +77,27 @@ class Model:
     assert len(raw) == plen, \
       "Raw parameter vector must be of length %d" % plen
     self._lib_set_vec('set_image_param', c_double, raw)
-    
+
+  #Sets the boolean variable use_z, which controls whether gt_estimation
+  #values are used in CUBAM instead of summing over possible gt.
+  def set_use_z(self, use_z):
+    annmodel.set_use_z(self.mPtr, use_z)
+
+  #UNUSED ATM.
+  def set_gt_prediction(self, raw):
+    plen = annmodel.get_image_param_len(self.mPtr)
+    assert len(raw) == plen, \
+      "Raw parameter vector must be of length %d" % plen
+    self._lib_set_vec('set_gt_prediction', c_int, raw)
+
+
+  def set_cv_prob(self, cv_prob):
+    plen = annmodel.get_image_param_len(self.mPtr)
+    assert len(cv_prob) == plen, \
+      "Raw parameter vector must be of length %d" % plen
+    self._lib_set_matrix('set_cv_prob', c_double, cv_prob)
+
+
   def get_model_param(self):
     plen = annmodel.get_model_param_len(self.mPtr)
     vec = self._lib_get_vec('get_model_param', c_double, plen)
@@ -131,11 +151,15 @@ class Model:
                         iprint=-1, maxfun=100)
     self.set_image_param(res[0])
     return res
-  
+
+
+  def optimize_gt(self):
+    annmodel.optimize_gt(self.mPtr)
+
   #Optimization of parameters where ground truth estimations have been
   #summed out.
   def optimize_param(self, numIter=30, options=None, verbose=False):
-    self.use_gt_predictions = False
+    self.set_use_z(False)
     for n in range(numIter):
       if verbose: print "  - iteration %d/%d" % (n+1, numIter)
       self.optimize_image_param()
@@ -143,12 +167,13 @@ class Model:
   
   #Optimization of parameters where we use a prediction for ground truth
   #estimate based on computer vision prediction.
-  #cvProb: output of SVM prediction based on image features
-  def optimize_param(self, cvProb, numIter=30, options=None, verbose=False):
-    self.use_gt_predictions = True
+  #cvProb: output of SVM prediction based on image features. List of 
+  def optimize_param_cv(self, cv_prob, numIter=30, options=None, verbose=False):
+    self.set_use_z(True)
     for n in range(numIter):
       if verbose: print "  - iteration %d/%d" % (n+1, numIter)
-      self.predict_gt(
+      self.set_cv_prob(cv_prob)
+      self.optimize_gt()
       self.optimize_image_param()
       self.optimize_worker_param()
       
@@ -172,7 +197,7 @@ class Model:
   
   def worker_objective_range(self, wkrId, prm):
     pass
-        
+
   def gradient(self, prm=None):
     n = annmodel.get_image_param_len(self.mPtr)
     if not prm is None:
@@ -192,7 +217,8 @@ class Model:
     n = annmodel.get_image_param_len(self.mPtr)
     grad = self.gradient()
     return array(grad[:n])
-    
+  
+
   def get_num_wkr_lbls(self):
     n = self.get_num_wkrs()
     return self._lib_get_vec('get_num_wkr_lbls', c_int, n)
@@ -216,3 +242,15 @@ class Model:
       cvec[i] = vec[i]
     fn = getattr(annmodel, fname)
     fn(self.mPtr, cvec)
+
+  def _lib_set_matrix(self, fname, vtype, matrix):
+    mlen = len(matrix)
+    c_matrix = (vtype*mlen)()
+    for i in range(mlen):
+      dlen = len(matrix[i])
+      c_matrix[i] = (vtype * dlen)()
+      for j in range(dlen):
+        c_matrix[i][j] = matrix[i][j]
+    fn = getattr(annmodel, fname)
+    fn(self.mPtr, c_matrix)
+

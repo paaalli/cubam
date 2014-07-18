@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <cmath>
 #include "utils.hpp"
+#include <iostream>
 
 #include "Binary1dSignalModel.hpp"
 
@@ -27,6 +28,32 @@ void Binary1dSignalModel::reset_image_param() {
     mXis[i] = 1.0;
 }
 
+void Binary1dSignalModel::reset_gt_prediction() {
+  if (!mDataIsLoaded)
+    throw runtime_error("You must load data before resetting parameters.");
+  clear_gt_prediction();
+  gt_prediction = new int[mNumImgs];
+  for (int i=0; i<mNumImgs; i++)
+    gt_prediction[i] = -1;
+}
+
+//We have to check whether cv_prob has been assigned a value before
+//to clear it. Because it's multidimensional we need to delete the arrays
+//it has as values. Attempting to do that with non assigned values will
+//result in a seg fault.
+void Binary1dSignalModel::reset_cv_prob() {
+  if (!mDataIsLoaded)
+    throw runtime_error("You must load data before resetting parameters.");
+  if (cv_prob != 0) 
+    clear_cv_prob();
+  cv_prob = new double*[mNumImgs];
+  for (int i=0; i<mNumImgs; i++) {
+    cv_prob[i] = new double[2];
+    cv_prob[i][0] = 1.0;
+    cv_prob[i][1] = 1.0;
+  }
+}
+
 void Binary1dSignalModel::set_image_param(double *xis) {
   if (!mDataIsLoaded)
     throw runtime_error("Data not loaded.");
@@ -41,6 +68,20 @@ void Binary1dSignalModel::set_worker_param(double *vars) {
     mWjs[j] = vars[j];
     mTjs[j] = vars[j+mNumWkrs];
   }
+}
+
+void Binary1dSignalModel::set_gt_prediction(int *gt) {
+  if (!mDataIsLoaded)
+    throw runtime_error("Data not loaded.");
+  for (int i=0; i<mNumImgs; i++)
+    gt_prediction[i] = gt[i];
+}
+
+void Binary1dSignalModel::set_cv_prob(double **cv) {
+  if (!mDataIsLoaded)
+    throw runtime_error("Data not loaded.");
+  for (int i=0; i<mNumImgs; i++)
+    cv_prob[i] = cv[i];  
 }
 
 void Binary1dSignalModel::get_image_param(double *xis) {
@@ -59,17 +100,20 @@ void Binary1dSignalModel::get_worker_param(double *vars) {
   }
 }
 
+//Calculates the objective function for Welinder's paper. (log one [6])
 double Binary1dSignalModel::objective() {
   if (!mDataIsLoaded)
     throw runtime_error("Data not loaded.");
   double obj = 0.0;
+
   // compute the xi prior
   for(int i=0; i<mNumImgs; i++) {
-    double x0sq = (mXis[i]+1.0)*(mXis[i]+1.0);
-    double x1sq = (mXis[i]-1.0)*(mXis[i]-1.0);
-    obj += (-0.5*log(2.0*PI*mSigX*mSigX)
-            + log(mBeta*exp(-0.5*x1sq/(mSigX*mSigX))
-                  + (1.-mBeta)*exp(-0.5*x0sq/(mSigX*mSigX))));
+
+    if (!use_z)
+      obj += image_objective_summed(i);
+    else
+      obj += image_objective_specified(i);
+
   }
   // compute the wj prior
   for(int j=0; j<mNumWkrs; j++)
@@ -98,6 +142,37 @@ double Binary1dSignalModel::objective() {
     }
   }
   return -obj;
+}
+
+//Calculates xi prior, log(p(x|theta,beta)) of objective function
+//by summing over all possible ground truths.
+double Binary1dSignalModel::image_objective_summed(int imgId) {
+
+  double x0sq = (mXis[imgId]+1.0)*(mXis[imgId]+1.0);
+  double x1sq = (mXis[imgId]-1.0)*(mXis[imgId]-1.0);
+  return (-0.5*log(2.0*PI*mSigX*mSigX)
+          + log(mBeta*exp(-0.5*x1sq/(mSigX*mSigX))
+                + (1.-mBeta)*exp(-0.5*x0sq/(mSigX*mSigX))));
+
+}
+
+//Calculates xi prior, log(p(x|theta)*p(z|I,beta)) by taking computer
+//vision into account and using an estimate for a ground truth.
+double Binary1dSignalModel::image_objective_specified(int imgId) {
+  double xsq;
+  double cv;
+  //If gt_prediction[i] == 1, then cv = p(z = 1| I, Beta)
+  //if gt_prediction[i] == 0, then cv = p(z = 0| I, Beta)
+  if (gt_prediction[imgId]) {
+    xsq = (mXis[imgId]-1.0)*(mXis[imgId]-1.0);
+    cv = cv_prob[imgId][1];
+  }
+  else {
+    xsq = (mXis[imgId]-1.0)*(mXis[imgId]-1.0);
+    cv = cv_prob[imgId][0];
+  }
+  return (-0.5*log(2.0*PI*mSigX*mSigX)
+          + log(cv*exp(-0.5*xsq/(mSigX*mSigX))));
 }
 
 void Binary1dSignalModel::worker_objective(int wkrId, double *prm, 
@@ -159,6 +234,7 @@ void Binary1dSignalModel::image_objective(int imgId, double *prm,
     wkrprior += LOGNORM(mWjs[idx], mMuW, mSigW) 
                 + LOGNORM(mTjs[idx], 0.0, mSigT);
   }
+  cout << "image_obj" << endl;
   // compute image related priors based on the prm vector
   for(int i=0; i<nprm; i++) {
     double x0sq = (prm[i]+1.0)*(prm[i]+1.0);
@@ -189,6 +265,22 @@ void Binary1dSignalModel::image_objective(int imgId, double *prm,
   }
 }
 
+//For every img, we predict the gt label that maximizes p(x|thetaz)*p(z|I)
+void Binary1dSignalModel::optimize_gt() {
+  if (!mDataIsLoaded)
+    throw runtime_error("Data not loaded.");
+  for (int i=0; i<mNumImgs; i++){
+    double z0 = NORMAL((mXis[i] + 1)*(mXis[i] + 1), mSigX);
+    double z1 = NORMAL((mXis[i] - 1)*(mXis[i] - 1), mSigX);
+    double cv0 = cv_prob[i][0];
+    double cv1 = cv_prob[i][1];
+    if (z1*cv1 > z0*cv0)
+      gt_prediction[i] = 1;
+    else
+      gt_prediction[i] = 0;
+  }
+}
+
 void Binary1dSignalModel::gradient(double *grad) {
   if (!mDataIsLoaded)
     throw runtime_error("Data not loaded.");
@@ -199,12 +291,11 @@ void Binary1dSignalModel::gradient(double *grad) {
     grad[i] = 0.0;
   // compute the xi prior gradient
   for(int i=0; i<mNumImgs; i++) {
-    double x0sq = (mXis[i]+1.0)*(mXis[i]+1.0);
-    double x1sq = (mXis[i]-1.0)*(mXis[i]-1.0);
-    x0sq = NORMAL(x0sq, mSigX);
-    x1sq = NORMAL(x1sq, mSigX);
-    grad[i] = (mBeta*(mXis[i]-1.0)*x1sq + (1.0-mBeta)*(mXis[i]+1.0)*x0sq)
-      /mSigX/mSigX/ (mBeta*x1sq +(1.0-mBeta)*x0sq);
+  
+    if (!use_z)
+      grad[i] = image_gradient_summed(i);
+    else
+      grad[i] = image_gradient_specified(i);
   }
   // compute the wj & tj prior gradients
   int woffset = mNumImgs;
@@ -239,4 +330,24 @@ void Binary1dSignalModel::gradient(double *grad) {
     grad[woffset+j] -= mXis[i]*philambda_ij;
     grad[toffset+j] += philambda_ij;
   }
+
+}
+
+
+double Binary1dSignalModel::image_gradient_summed(int imgId) {
+  
+  double x0sq = (mXis[imgId]+1.0)*(mXis[imgId]+1.0);
+  double x1sq = (mXis[imgId]-1.0)*(mXis[imgId]-1.0);
+  x0sq = NORMAL(x0sq, mSigX);
+  x1sq = NORMAL(x1sq, mSigX);
+  double grad = (mBeta*(mXis[imgId]-1.0)*x1sq + (1.0-mBeta)*(mXis[imgId]+1.0)*x0sq)
+    /mSigX/mSigX/ (mBeta*x1sq +(1.0-mBeta)*x0sq);
+  return grad;
+}
+
+//TODO: Find out the gradient of p(z|I) and multiply to that.
+double Binary1dSignalModel::image_gradient_specified(int imgId) {
+
+  double grad = (mXis[imgId] - (2.0*gt_prediction[imgId] - 1.0))/mSigX/mSigX;
+  return grad;
 }

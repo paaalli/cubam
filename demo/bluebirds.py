@@ -8,12 +8,26 @@ You should just be able to run it:
   python bluebirds.py
 
 """
+import signal
 import os, pickle, yaml
 from numpy import random, mean, std, sqrt
 from matplotlib.pylab import figure
 
+
 from cubam import Binary1dSignalModel, BinaryBiasModel
 from cubam.utils import majority_vote, read_data_file
+
+########################################################################
+# DEBUG
+########################################################################
+PID = os.getpid()
+
+def do_nothing():
+    pass
+    
+signal.signal(signal.SIGUSR1, do_nothing)
+
+
 
 ############################################################################
 # TASKS
@@ -98,10 +112,11 @@ if task in tasks:
         print "Processing %d workers" % numWkr
         for alg in errRates.keys(): errRates[alg][numWkr] = []
         for dfile in trialList:
+            
             # Binary Signal Model
             m = Binary1dSignalModel(filename=dfile) 
             m.optimize_param()
-            
+                        
             #exi is a list of predictions with image numbers as list seats.
             exi = getParameter(m.get_image_param(), 0)
             #If exi[i] > 0, it is more likely that for that image we have
@@ -118,11 +133,11 @@ if task in tasks:
             
 
             # Binary Bias Model
-            m = BinaryBiasModel(filename=dfile)
-            m.optimize_param()
-            iprm = m.get_image_param_raw()
-            err = comperr([iprm[id]>.5 for id in range(dinfo['numImg'])])
-            errRates['bias'][numWkr].append(err)
+            # m = BinaryBiasModel(filename=dfile)
+            # m.optimize_param()
+            # iprm = m.get_image_param_raw()
+            # err = comperr([iprm[id]>.5 for id in range(dinfo['numImg'])])
+            # errRates['bias'][numWkr].append(err)
             # majority
             labels = read_data_file(dfile)
             ezis = majority_vote(labels['image'])

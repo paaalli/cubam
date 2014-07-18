@@ -13,8 +13,15 @@ public:
   virtual void set_image_param(double*) = 0;
   virtual void get_worker_param(double*) = 0;
   virtual void get_image_param(double*) = 0;
+
+  virtual void set_use_z(bool) = 0;
+  virtual void set_gt_prediction(int*) = 0;
+  virtual void set_cv_prob(double**) = 0;
+
   virtual void reset_worker_param() = 0;
   virtual void reset_image_param() = 0;
+  virtual void reset_gt_prediction() = 0;
+  virtual void reset_cv_prob() = 0;
   
   virtual void worker_objective(int, double*, int, double*) = 0;
   virtual void image_objective(int, double*, int, double*) = 0;
@@ -23,6 +30,9 @@ public:
   virtual void clear_data() = 0;
 
   virtual double objective() = 0;
+
+  virtual void optimize_gt() = 0;
+
   virtual void gradient(double *grad) = 0;
 
   int get_num_wkrs() { return mNumWkrs; }
@@ -39,6 +49,8 @@ public:
 protected:
   virtual void clear_worker_param() = 0;
   virtual void clear_image_param() = 0;
+  virtual void clear_gt_prediction() = 0;
+  virtual void clear_cv_prob() = 0;
 
   int mNumWkrs;
   int mNumImgs;

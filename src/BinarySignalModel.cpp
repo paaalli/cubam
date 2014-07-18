@@ -1,5 +1,5 @@
 #include "BinarySignalModel.hpp"
-
+#include <iostream>
 BinarySignalModel::BinarySignalModel() {
   mBeta = 0.5;
   mSigX = 0.8;
@@ -9,6 +9,9 @@ BinarySignalModel::BinarySignalModel() {
   mXis = 0;
   mWjs = 0;
   mTjs = 0;
+  gt_prediction = 0;
+  cv_prob = 0;
+  use_z = false;
 }
 
 void BinarySignalModel::set_model_param(double *prm) {
@@ -31,6 +34,8 @@ void BinarySignalModel::clear_data() {
   BinaryModel::clear_data();
   clear_worker_param();
   clear_image_param();
+  clear_gt_prediction();
+  clear_cv_prob();
 }
 
 void BinarySignalModel::clear_worker_param() {
@@ -40,4 +45,21 @@ void BinarySignalModel::clear_worker_param() {
 
 void BinarySignalModel::clear_image_param() {
   delete [] mXis; mXis = 0;
+}
+
+void BinarySignalModel::clear_gt_prediction() {
+  delete [] gt_prediction; gt_prediction = 0;
+}
+
+//We assume cv_prob has already been assigned arrays for values. 
+//Otherwise we get segment fault.
+void BinarySignalModel::clear_cv_prob() {
+  for (int i = mNumImgs; i >= 0; i--) {
+    delete[] cv_prob[i]; cv_prob[i] = 0;
+  }
+  delete[] cv_prob; cv_prob = 0;
+}
+
+void BinarySignalModel::set_use_z(bool z) {
+  use_z = z;
 }

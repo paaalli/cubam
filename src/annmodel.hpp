@@ -17,7 +17,14 @@ EXPORTED void set_image_param(MODEL_PTR ptr, double *prm);
 EXPORTED void get_worker_param(MODEL_PTR ptr, double *prm);
 EXPORTED void get_image_param(MODEL_PTR ptr, double *prm);
 
+EXPORTED void set_gt_prediction(MODEL_PTR ptr, int *gt);
+EXPORTED void set_use_z(MODEL_PTR ptr, bool z);
+EXPORTED void set_cv_prob(MODEL_PTR ptr, double **cv_prob);
+
 EXPORTED double objective(MODEL_PTR ptr);
+
+EXPORTED void optimize_gt(MODEL_PTR ptr);
+
 EXPORTED void image_objective(MODEL_PTR ptr, int imgId, double *prm, 
                               int nprm, double* obj);
 EXPORTED void worker_objective(MODEL_PTR ptr, int wkrId, double *prm, 

@@ -51,6 +51,21 @@ EXPORTED void set_image_param(MODEL_PTR ptr, double *prm) {
   mptr->set_image_param(prm);
 }
 
+EXPORTED void set_gt_prediction(MODEL_PTR ptr, int *gt) {
+  Model *mptr = (Model*) ptr;
+  mptr->set_gt_prediction(gt); 
+}
+
+EXPORTED void set_cv_prob(MODEL_PTR ptr, double **cv_prob) {
+  Model *mptr = (Model*) ptr;
+  mptr->set_cv_prob(cv_prob);
+}
+
+EXPORTED void set_use_z(MODEL_PTR ptr, bool z) {
+  Model *mptr = (Model*) ptr;
+  mptr->set_use_z(z);
+}
+
 EXPORTED void get_model_param(MODEL_PTR ptr, double *prm) {
   Model *mptr = (Model*) ptr;
   mptr->get_model_param(prm);
@@ -69,6 +84,11 @@ EXPORTED void get_image_param(MODEL_PTR ptr, double *prm) {
 EXPORTED double objective(MODEL_PTR ptr) {
   Model *mptr = (Model*) ptr;
   return mptr->objective();
+}
+
+EXPORTED void optimize_gt(MODEL_PTR ptr) {
+  Model *mptr = (Model*) ptr;
+  mptr->optimize_gt();
 }
 
 EXPORTED void image_objective(MODEL_PTR ptr, int imgId, double *prm, 

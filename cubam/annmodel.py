@@ -1,5 +1,5 @@
 from os.path import dirname, abspath, join, normpath
-from ctypes import CDLL, c_char_p, c_void_p, c_double, c_int, cast, POINTER
+from ctypes import CDLL, c_char_p, c_void_p, c_double, c_int, cast, POINTER, c_bool
 
 # connect to the shared library (assumed to reside in ../cubamcpp.so)
 libdir = normpath(join(dirname(abspath(__file__)), '..'))
@@ -21,6 +21,12 @@ annmodel.set_worker_param.argtypes = [c_void_p, POINTER(c_double)]
 annmodel.set_image_param.argtypes = [c_void_p, POINTER(c_double)]
 annmodel.get_worker_param.argtypes = [c_void_p, POINTER(c_double)]
 annmodel.get_image_param.argtypes = [c_void_p, POINTER(c_double)]
+
+annmodel.set_gt_prediction.argtypes = [c_void_p, POINTER(c_int)]
+
+annmodel.set_use_z.argtypes = [c_void_p, c_bool]
+annmodel.set_cv_prob.argtypes = [c_void_p, POINTER(POINTER(c_double))]
+annmodel.optimize_gt.argtypes = [c_void_p]
  
 annmodel.objective.argtypes = [c_void_p]
 annmodel.objective.restype = c_double
@@ -47,3 +53,4 @@ annmodel.get_worker_param_len.argtypes = [c_void_p]
 annmodel.get_worker_param_len.restype = c_int
 annmodel.get_image_param_len.argtypes = [c_void_p]
 annmodel.get_image_param_len.restype = c_int
+

@@ -49,6 +49,34 @@ void BinaryNdSignalModel::reset_image_param() {
     mXis[i] = 0.0;
 }
 
+void BinaryNdSignalModel::reset_gt_prediction() {
+  if (!mDataIsLoaded)
+    throw runtime_error("You must load data before resetting parameters.");
+  clear_gt_prediction();
+  int nElements = mNumImgs*mDim;
+  gt_prediction = new int[nElements];
+  for (int i=0; i<nElements; i++)
+    gt_prediction[i] = -1;
+}
+
+//We have to check whether cv_prob has been assigned a value before
+//to clear it. Because it's multidimensional we need to delete the arrays
+//it has as values. Attempting to do that with non assigned values will
+//result in a seg fault.
+void BinaryNdSignalModel::reset_cv_prob() {
+  if (!mDataIsLoaded)
+    throw runtime_error("You must load data before resetting parameters.");
+  if (cv_prob != 0)
+    clear_cv_prob();
+  int nElements = mNumImgs*mDim;
+  cv_prob = new double*[nElements];
+  for (int i=0; i<nElements; i++) {
+    cv_prob[i] = new double[2];
+    cv_prob[i][0] = 1.0;
+    cv_prob[i][1] = 1.0;
+  }
+}
+
 void BinaryNdSignalModel::set_image_param(double *xis) {
   if (!mDataIsLoaded)
     throw runtime_error("Data not loaded.");
@@ -65,6 +93,22 @@ void BinaryNdSignalModel::set_worker_param(double *vars) {
     mWjs[j] = vars[j];
   for (int j=0; j<mNumWkrs; j++)
     mTjs[j] = vars[j+nElements];
+}
+
+void BinaryNdSignalModel::set_gt_prediction(int *gt) {
+  if (!mDataIsLoaded)
+    throw runtime_error("Data not loaded.");
+  int nElements = mNumImgs*mDim;
+  for (int i=0; i<nElements; i++)
+    gt_prediction[i] = gt[i];
+}
+
+void BinaryNdSignalModel::set_cv_prob(double **cv) {
+  if (!mDataIsLoaded)
+    throw runtime_error("Data not loaded.");
+  int nElements = mNumImgs*mDim;
+  for (int i=0; i<nElements; i++)
+    cv_prob[i] = cv[i];  
 }
 
 void BinaryNdSignalModel::get_image_param(double *xis) {
@@ -242,6 +286,13 @@ void BinaryNdSignalModel::image_objective(int imgId, double *prm,
   }
 }
 
+//TODO: write the optimize_gt function, will be like in 1d except
+//      DUNDUNDUN, in m dimensions
+void BinaryNdSignalModel::optimize_gt() {
+
+}
+
+//TODO: Switch the xi prior gradient into two functions like in 1d
 void BinaryNdSignalModel::gradient(double *grad) {
   if (!mDataIsLoaded)
     throw runtime_error("Data not loaded.");
