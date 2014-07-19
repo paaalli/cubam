@@ -245,7 +245,7 @@ class Model:
 
   def _lib_set_matrix(self, fname, vtype, matrix):
     mlen = len(matrix)
-    c_matrix = (vtype*mlen)()
+    c_matrix = (POINTER(vtype)*mlen)()
     for i in range(mlen):
       dlen = len(matrix[i])
       c_matrix[i] = (vtype * dlen)()
