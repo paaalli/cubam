@@ -8,6 +8,7 @@ from ctypes import CDLL, c_char_p, c_void_p, c_double, c_int, cast, POINTER
 from annmodel import annmodel
 from utils import randtn, write_data_file
 
+
 ## main model class
 class Model:
   """
@@ -78,10 +79,10 @@ class Model:
       "Raw parameter vector must be of length %d" % plen
     self._lib_set_vec('set_image_param', c_double, raw)
 
-  #Sets the boolean variable use_z, which controls whether gt_estimation
-  #values are used in CUBAM instead of summing over possible gt.
-  def set_use_z(self, use_z):
-    annmodel.set_use_z(self.mPtr, use_z)
+  #Sets the boolean variable use_cv, which controls whether we use cv
+  #predictions instead of priors.
+  def set_use_cv(self, use_cv):
+    annmodel.set_use_cv(self.mPtr, use_cv)
 
   #UNUSED ATM.
   def set_gt_prediction(self, raw):
@@ -114,6 +115,10 @@ class Model:
   def get_image_param_raw(self):
     plen = annmodel.get_image_param_len(self.mPtr)
     return self._lib_get_vec('get_image_param', c_double, plen)
+
+  def get_image_prob_raw(self):
+    plen = annmodel.get_image_param_len(self.mPtr)
+    return self._lib_get_vec('get_image_prob', c_double, plen)
     
   def get_worker_param(self, id=None):
     pass
@@ -121,6 +126,9 @@ class Model:
   def get_image_param(self, id=None):
     pass
   
+  def get_image_prob(self, id=None):
+    pass
+
   # TODO: load and save parameters
   
   def optimize_worker_param(self):
@@ -159,7 +167,7 @@ class Model:
   #Optimization of parameters where ground truth estimations have been
   #summed out.
   def optimize_param(self, numIter=30, options=None, verbose=False):
-    self.set_use_z(False)
+    self.set_use_cv(False)
     for n in range(numIter):
       if verbose: print "  - iteration %d/%d" % (n+1, numIter)
       self.optimize_image_param()
@@ -167,12 +175,13 @@ class Model:
   
   #Optimization of parameters where we use a prediction for ground truth
   #estimate based on computer vision prediction.
-  #cvProb: output of SVM prediction based on image features. List of 
+  #cvProb: output of SVM prediction based on image features. List of probabilities
+  #for each possible gt for each image.
   def optimize_param_cv(self, cv_prob, numIter=30, options=None, verbose=False):
-    self.set_use_z(True)
+    self.set_use_cv(True)
+    self.set_cv_prob(cv_prob)
     for n in range(numIter):
       if verbose: print "  - iteration %d/%d" % (n+1, numIter)
-      self.set_cv_prob(cv_prob)
       self.optimize_gt()
       self.optimize_image_param()
       self.optimize_worker_param()

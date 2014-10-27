@@ -37,9 +37,9 @@ tasks = ['gen-data','run-models','show-results']
 ############################################################################
 # DEMO PARAMETERS
 ############################################################################
-numWkrList = [4, 12, 20]
+numWkrList = [4,8,12,16,20]
 numImg = 500
-numTrial = 40
+numTrial = 100
 
 ############################################################################
 # OUTPUT LOCATION
@@ -111,12 +111,14 @@ if task in tasks:
     for (numWkr, trialList) in dinfo['filemap']:
         print "Processing %d workers" % numWkr
         for alg in errRates.keys(): errRates[alg][numWkr] = []
+        i = 1
         for dfile in trialList:
-            
+            print i
+            i = i+1
             # Binary Signal Model
             m = Binary1dSignalModel(filename=dfile) 
             m.optimize_param()
-                        
+           
             #exi is a list of predictions with image numbers as list seats.
             exi = getParameter(m.get_image_param(), 0)
             #If exi[i] > 0, it is more likely that for that image we have
@@ -132,12 +134,12 @@ if task in tasks:
             errRates['signal'][numWkr].append(err)
             
 
-            # Binary Bias Model
-            # m = BinaryBiasModel(filename=dfile)
-            # m.optimize_param()
-            # iprm = m.get_image_param_raw()
-            # err = comperr([iprm[id]>.5 for id in range(dinfo['numImg'])])
-            # errRates['bias'][numWkr].append(err)
+            #Binary Bias Model
+            m = BinaryBiasModel(filename=dfile)
+            m.optimize_param()
+            iprm = m.get_image_param_raw()
+            err = comperr([iprm[id]>.5 for id in range(dinfo['numImg'])])
+            errRates['bias'][numWkr].append(err)
             # majority
             labels = read_data_file(dfile)
             ezis = majority_vote(labels['image'])
@@ -156,6 +158,7 @@ if task in tasks:
     exps = [('signal', 'NIPS 2010'), ('majority', 'majority'), ('bias', 'Dawid & Skene')]
     numWkrList = sorted(errRates[exps[0][0]].keys())
     fig = figure(1, (5.5,3)); fig.clear(); ax = fig.add_subplot(1,1,1)
+    print errRates
     for (expt, legname) in exps:
         rates = [mean(errRates[expt][nw]) for nw in numWkrList]
         erbs = [std(errRates[expt][nw])/sqrt(numTrial) for nw in numWkrList]

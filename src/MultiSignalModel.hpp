@@ -1,17 +1,16 @@
-#ifndef __BinaryNdSignalModel_hpp__
-#define __BinaryNdSignalModel_hpp__
+#ifndef __MultiSignalModel_hpp__
+#define __MultiSignalModel_hpp__
 
-#include "BinaryModel.hpp"
+#include "MultiModel.hpp"
 
-#include "BinarySignalModel.hpp"
-
-class BinaryNdSignalModel : public BinarySignalModel {
+class MultiSignalModel : public MultiModel {
 public:
-  BinaryNdSignalModel() { mDim = 2; };
+  MultiSignalModel();
   
   void set_model_param(double *prm);
   void get_model_param(double *prm);
-  
+
+  void set_use_cv(bool cv);
   void set_worker_param(double *vars);
   void set_image_param(double *xis);
   void set_gt_prediction(int *gt);
@@ -21,17 +20,11 @@ public:
   void get_image_param(double *xis);
   void get_image_prob(double *img_prob);
 
-  void reset_worker_param();
-  void reset_image_param();
-  void reset_gt_prediction();
-  void reset_cv_prob();
-  
-  void worker_objective(int wkrId, double *prm, int nprm, double* obj);
-  void image_objective(int imgId, double *prm, int nprm, double* obj);
-  
+  void clear_data();
+    
   virtual int get_worker_param_len() { return mNumWkrs*(1+mDim); }
   virtual int get_image_param_len() { return mNumImgs*mDim; }
-  virtual int get_model_param_len() { return 6; }
+  virtual int get_model_param_len() { return 7; }
   
   double objective();
 
@@ -41,7 +34,25 @@ public:
 
 private:
   int mDim;
-};
+  int mClasses;
 
+protected:
+  void clear_worker_param();
+  void clear_image_param();
+  void clear_gt_prediction();
+  void clear_cv_prob();
+
+  bool use_cv;
+  int *gt_prediction;
+  double **cv_prob;
+  double *mXis;
+  double *mWjs;
+  double *mTjs;
+  double mBeta;
+  double mSigX;
+  double mSigW;
+  double mMuW;
+  double mSigT;
+};
 
 #endif

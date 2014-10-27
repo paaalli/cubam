@@ -51,6 +51,13 @@ class Binary1dSignalModel(BinaryModel):
     else:
       return [prm[id]]
     
+  def get_image_prob(self, id=None):
+    prm = self.get_image_prob_raw()
+    if id is None:
+      return dict((id, [prm[id]]) for id in range(len(prm)))
+    else:
+      return [prm[id]]
+
   def get_worker_var(self, wkrId):
     """
     Note: only works post-optimization

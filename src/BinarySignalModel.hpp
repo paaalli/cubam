@@ -10,7 +10,7 @@ public:
   void set_model_param(double *prm);
   void get_model_param(double *prm);
 
-  void set_use_z(bool z);
+  void set_use_cv(bool cv);
   
   void clear_data();
   
@@ -20,7 +20,7 @@ protected:
   void clear_gt_prediction();
   void clear_cv_prob();
 
-  bool use_z;
+  bool use_cv;
   int *gt_prediction;
   double **cv_prob;
   double *mXis;

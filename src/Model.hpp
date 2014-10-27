@@ -13,8 +13,9 @@ public:
   virtual void set_image_param(double*) = 0;
   virtual void get_worker_param(double*) = 0;
   virtual void get_image_param(double*) = 0;
+  virtual void get_image_prob(double*) = 0;
 
-  virtual void set_use_z(bool) = 0;
+  virtual void set_use_cv(bool) = 0;
   virtual void set_gt_prediction(int*) = 0;
   virtual void set_cv_prob(double**) = 0;
 

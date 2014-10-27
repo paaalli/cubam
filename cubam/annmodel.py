@@ -21,10 +21,11 @@ annmodel.set_worker_param.argtypes = [c_void_p, POINTER(c_double)]
 annmodel.set_image_param.argtypes = [c_void_p, POINTER(c_double)]
 annmodel.get_worker_param.argtypes = [c_void_p, POINTER(c_double)]
 annmodel.get_image_param.argtypes = [c_void_p, POINTER(c_double)]
+annmodel.get_image_prob.argtypes = [c_void_p, POINTER(c_double)]
 
 annmodel.set_gt_prediction.argtypes = [c_void_p, POINTER(c_int)]
 
-annmodel.set_use_z.argtypes = [c_void_p, c_bool]
+annmodel.set_use_cv.argtypes = [c_void_p, c_bool]
 annmodel.set_cv_prob.argtypes = [c_void_p, POINTER(POINTER(c_double))]
 annmodel.optimize_gt.argtypes = [c_void_p]
  

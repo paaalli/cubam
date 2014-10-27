@@ -8,11 +8,12 @@ public:
   void set_worker_param(double *vars);
   void set_image_param(double *xis);
   void set_gt_prediction(int *gt);
+  void set_cv_prob(double **cv);
 
   void get_worker_param(double *vars);
   void get_image_param(double *xis);
-  void set_cv_prob(double **cv);
-
+  void get_image_prob(double *img_prob);
+  
   void reset_worker_param();
   void reset_image_param();
   void reset_gt_prediction();

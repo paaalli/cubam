@@ -61,9 +61,9 @@ EXPORTED void set_cv_prob(MODEL_PTR ptr, double **cv_prob) {
   mptr->set_cv_prob(cv_prob);
 }
 
-EXPORTED void set_use_z(MODEL_PTR ptr, bool z) {
+EXPORTED void set_use_cv(MODEL_PTR ptr, bool cv) {
   Model *mptr = (Model*) ptr;
-  mptr->set_use_z(z);
+  mptr->set_use_cv(cv);
 }
 
 EXPORTED void get_model_param(MODEL_PTR ptr, double *prm) {
@@ -80,6 +80,12 @@ EXPORTED void get_image_param(MODEL_PTR ptr, double *prm) {
   Model *mptr = (Model*) ptr;
   mptr->get_image_param(prm);
 }
+
+EXPORTED void get_image_prob(MODEL_PTR ptr, double *img_prob) {
+  Model *mptr = (Model*) ptr;
+  mptr->get_image_prob(img_prob);
+}
+
 
 EXPORTED double objective(MODEL_PTR ptr) {
   Model *mptr = (Model*) ptr;

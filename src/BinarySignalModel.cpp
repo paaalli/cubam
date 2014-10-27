@@ -5,13 +5,13 @@ BinarySignalModel::BinarySignalModel() {
   mSigX = 0.8;
   mSigW = 1.0;
   mMuW = 1.0;
-  mSigT = 3.0;
+  mSigT = 3;
   mXis = 0;
   mWjs = 0;
   mTjs = 0;
   gt_prediction = 0;
   cv_prob = 0;
-  use_z = false;
+  use_cv = false;
 }
 
 void BinarySignalModel::set_model_param(double *prm) {
@@ -60,6 +60,6 @@ void BinarySignalModel::clear_cv_prob() {
   delete[] cv_prob; cv_prob = 0;
 }
 
-void BinarySignalModel::set_use_z(bool z) {
-  use_z = z;
+void BinarySignalModel::set_use_cv(bool cv) {
+  use_cv = cv;
 }

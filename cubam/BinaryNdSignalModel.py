@@ -45,6 +45,16 @@ class BinaryNdSignalModel(BinaryModel):
         else:
             return prm[dim*id:dim*(id+1)]
 
+    def get_image_prob(self, id=None):
+        prm = self.get_image_param_raw()
+        dim = self.get_model_param()['dim']
+        nimgs = len(prm)/dim
+        if id is None:
+            return dict((id, prm[dim*id:dim*(id+1)]) \
+                for id in range(nimgs))
+        else:
+            return prm[dim*id:dim*(id+1)]
+
     def get_worker_var(self, wkrId):
         pass
 

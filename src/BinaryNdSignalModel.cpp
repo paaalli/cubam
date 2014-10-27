@@ -98,7 +98,7 @@ void BinaryNdSignalModel::set_worker_param(double *vars) {
 void BinaryNdSignalModel::set_gt_prediction(int *gt) {
   if (!mDataIsLoaded)
     throw runtime_error("Data not loaded.");
-  int nElements = mNumImgs*mDim;
+  int nElements = mNumImgs
   for (int i=0; i<nElements; i++)
     gt_prediction[i] = gt[i];
 }
@@ -107,8 +107,10 @@ void BinaryNdSignalModel::set_cv_prob(double **cv) {
   if (!mDataIsLoaded)
     throw runtime_error("Data not loaded.");
   int nElements = mNumImgs*mDim;
-  for (int i=0; i<nElements; i++)
-    cv_prob[i] = cv[i];  
+  for (int i=0; i<nElements; i++) {
+    cv_prob[i][0] = cv[i][0];
+    cv_prob[i][1] = cv[i][1];  
+  }
 }
 
 void BinaryNdSignalModel::get_image_param(double *xis) {
@@ -117,6 +119,20 @@ void BinaryNdSignalModel::get_image_param(double *xis) {
   int nElements = mNumImgs*mDim;
   for (int i=0; i<nElements; i++)
     xis[i] = mXis[i];
+}
+
+void BinaryNdSignalModel::get_image_prob(double *img_prob) {
+  if (!mDataIsLoaded)
+    throw runtime_error("Data not loaded.");
+  int nElements = mNumImgs*mDim;
+  for (int i=0; i<nElements; i++) {
+    double z0 = NORMAL((mXis[i] + 1)*(mXis[i] + 1), mSigX);
+    double z1 = NORMAL((mXis[i] - 1)*(mXis[i] - 1), mSigX);
+    if (mXis[i] > 0)
+      img_prob[i] = z1/(z1+z0);
+    else
+      img_prob[i] = z0/(z1+z0);
+  }
 }
 
 void BinaryNdSignalModel::get_worker_param(double *vars) {
@@ -133,7 +149,10 @@ double BinaryNdSignalModel::objective() {
   if (!mDataIsLoaded)
     throw runtime_error("Data not loaded.");
   double obj = 0.0;
-  // compute the xi prior
+  // compute the xi prior 
+  // Why the fk is the xi prior calculated like this and not like the wj tj priors?
+  // As in, why not add to obj in the inner for loop? because we are summing over z?
+  // Think so.
   for(int i=0; i<mNumImgs; i++) {
     double x0sq = 0.0;
     double x1sq = 0.0;
